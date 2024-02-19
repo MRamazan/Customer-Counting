@@ -8,18 +8,17 @@ from centroidtracker import CentroidTracker
 
 class Tracker:
     def __init__(self):
-        # Store the center positions of the objects
+       
         self.center_points = {}
-        # Keep the count of the IDs
-        # each time a new object id detected, the count will increase by one
+        
         self.id_count = 0
 
 
     def update(self, objects_rect):
-        # Objects boxes and ids
+      
         objects_bbs_ids = []
 
-        # Get center point of new object
+       
         for rect in objects_rect:
             x, y, w, h = rect
             cx = (x + x + w) // 2
@@ -37,13 +36,13 @@ class Tracker:
                     same_object_detected = True
                     break
 
-            # New object is detected we assign the ID to that object
+           
             if same_object_detected is False:
                 self.center_points[self.id_count] = (cx, cy)
                 objects_bbs_ids.append([x, y, w, h, self.id_count])
                 self.id_count += 1
 
-        # Clean the dictionary by center points to remove IDS not used anymore
+        
         new_center_points = {}
         for obj_bb_id in objects_bbs_ids:
             _, _, _, _, object_id = obj_bb_id
@@ -101,11 +100,6 @@ class ObjectDetection:
         return model
 
     def score_frame(self, frame):
-        """
-        Takes a single frame as input, and scores the frame using yolo5 model.
-        :param frame: input frame in numpy/list/tuple format.
-        :return: Labels and Coordinates of objects detected by model in the frame.
-        """
         self.model.to(self.device)
         frame = [frame]
         results = self.model(frame)
@@ -114,20 +108,9 @@ class ObjectDetection:
         return labels, cord
 
     def class_to_label(self, x):
-        """
-        For a given label value, return corresponding string label.
-        :param x: numeric label
-        :return: corresponding string label
-        """
         return self.classes[int(x)]
 
     def plot_boxes(self, results, frame, frame_count):
-        """
-        Takes a frame and its results as input, and plots the bounding boxes and label on to the frame.
-        :param results: contains labels and coordinates predicted by model on the given frame.
-        :param frame: Frame which has been scored.
-        :return: Frame with bounding boxes and labels ploted on it.
-        """
         labels, cord = results
 
         n = len(labels)
@@ -172,11 +155,6 @@ class ObjectDetection:
 
 
     def __call__(self,frame, cap=None):
-        """
-        This function is called when class is executed, it runs the loop to read the video frame by frame,
-        and write the output into a new file.
-        :return: void
-        """
         if cap is None:
             cap = cv2.VideoCapture(0)
         else:
