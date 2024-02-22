@@ -1,7 +1,9 @@
+import random
 import time
 
 import cv2
 import numpy as np
+import torch
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QPainterPath, QImage
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QVBoxLayout, QGraphicsScene, \
@@ -10,7 +12,7 @@ from PyQt5.QtCore import Qt, QFile,QLocale
 from PyQt5 import QtCore
 import matplotlib
 
-from GenderClassification.app import tracker
+from GenderClassification.app import Model
 
 matplotlib.use('Qt5Agg')
 from PyQt5.QtGui import QColor
@@ -22,9 +24,10 @@ import sys
 class MyMainWindow(QMainWindow):
     def __init__(self):
         super(MyMainWindow, self).__init__()
-        self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\stacked - Copy.ui", self)
+        self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\appui.ui", self)
 
         self.start_time = time.time()
+        self.start_date = time.strftime("%H:%M")
         self.yesterday_male_count = []
         self.yesterday_female_count = []
         self.yesterday_customer_count = []
@@ -37,6 +40,9 @@ class MyMainWindow(QMainWindow):
         self.this_year_female_count = []
         self.this_year_customer_count = []
 
+        self.hours = [0]
+        self.customer = [0]
+
         self.run_time = self.findChild(QLabel, "label_run_time")
         self.total_customer_count_label = self.findChild(QLabel, "label_total_customer2")
         self.label_status = self.findChild(QLabel, "label_status")
@@ -44,18 +50,21 @@ class MyMainWindow(QMainWindow):
         self.current_count = 0
         self.start = False
 
-        self.cam = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\16.mp4")
-        self.model = tracker.ObjectDetection()
+        self.cam = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\0000.mp4")
+        self.model = Model.ObjectDetection(torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True))
         self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(1000)
+        self.timer.setInterval(3000)
         self.timer.timeout.connect(self.update_camera_stats)
         self.timer.start()
+        self.total_visits = self.findChild(QLabel, "label_total_visits")
+        self.started_at_label = self.findChild(QLabel, "started_at")
 
 
 
 
 
-        self.cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\16.mp4")
+
+        self.cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\11.mp4")
 
         self.home_page()
 
@@ -165,6 +174,7 @@ class MyMainWindow(QMainWindow):
 
 
 
+
         time = QtCore.QDateTime.currentDateTime().toString("hh:mm")
         day = local.toString(QtCore.QDateTime.currentDateTime(), "dddd")
         self.label_time.setText(time)
@@ -174,6 +184,9 @@ class MyMainWindow(QMainWindow):
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.displayTime)
         self.timer.start()
+        self.timer.setInterval(3000)
+        self.timer.timeout.connect(self.update_graph)
+        self.timer.start()
 
         self.ui.pushButton_1.clicked.connect(lambda: self.show_page(0))
         self.ui.pushButton_2.clicked.connect(lambda: self.show_page(1))
@@ -181,17 +194,20 @@ class MyMainWindow(QMainWindow):
         self.ui.pushButton_4.clicked.connect(lambda: self.show_page(3))
         self.ui.pushButton_5.clicked.connect(lambda: self.show_page(4))
 
-        plot_widget = pg.PlotWidget()
-        pen = pg.mkPen(color=(0, 128, 255), width=1, cosmetic=True)
-        pen2 = pg.mkPen(color=(255, 37, 121), width=1, cosmetic=True)
 
-        plot_widget.plot([1, 2, 3, 4, 5, 6, 7], [2, 3, 3, 3, 6, 4, 5], pen=pen, symbolPen=None, symbolSize=10,
-                         symbolBrush=(0, 128, 255))
-        plot_widget.plot([1, 2, 3, 4, 5, 6, 7], [2, 4, 5, 4, 4, 3, 4], pen=pen2, symbolPen=None, symbolSize=10,
-                         symbolBrush=(255, 37, 121))
+
+    def update_graph(self):
+        self.customer.append(int(self.camera_customer_count))
+        self.hours.append(max(self.hours) + 0.00083333333)
+        pen = pg.mkPen(color=(0, 128, 255), width=1, cosmetic=True)
+        plot_widget = pg.PlotWidget()
+        plot_widget.plot(self.hours, self.customer, pen=pen, symbolPen=None, symbolSize=1,
+                         symbolBrush=(0, 255, 255))
 
         plot_widget.setFixedWidth(500)
         plot_widget.setFixedHeight(270)
+        plot_widget.setXRange(0, max(self.customer)+ 50)
+        plot_widget.setYRange(0, max(self.hours) + 7)
         plot_widget.setBackground("white")
 
         self.scene = QGraphicsScene()
@@ -201,14 +217,16 @@ class MyMainWindow(QMainWindow):
         proxy_widget.setWidget(plot_widget)
         self.scene.addItem(proxy_widget)
 
+
     def camera_page(self):
         if self.start == True:
+
           label = self.findChild(QLabel, "label_3")
-          ret, frame = self.cam.read()
+          ret, frame = self.cap.read()
 
           start_time = time.time()
-
-          processed_frame, self.camera_customer_count, self.current_count = self.model.__call__(frame)
+          processed_frame, self.camera_customer_count, self.current_count, new_detected = self.model.__call__(frame)
+          end_time = time.time()
 
           height, width, channel = processed_frame.shape
 
@@ -221,9 +239,10 @@ class MyMainWindow(QMainWindow):
 
 
           label.setScaledContents(True)
-          end_time = time.time()
+
 
           fps = 1 / np.round(end_time - start_time, 3)
+          print(fps)
 
 
     def update_camera(self):
@@ -238,10 +257,11 @@ class MyMainWindow(QMainWindow):
         run_time_label = self.findChild(QLabel, "label_run_time")
         total_person_count = self.findChild(QLabel, "label_total_customer2")
         current_detected =  self.findChild(QLabel, "currentcount")
-        print(self.current_count)
         current_detected.setText(str(self.current_count))
         run_time_label.setText(str(run_time) + " Min.")
         total_person_count.setText(str(self.camera_customer_count))
+        self.total_visits.setText(str(self.camera_customer_count))
+        self.started_at_label.setText(str(self.start_date))
     def start_stop(self):
         print(self.start)
         if self.start == False:
