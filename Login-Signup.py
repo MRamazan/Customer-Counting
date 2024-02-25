@@ -1,22 +1,12 @@
 import random
-import time
-
-import cv2
-import numpy as np
-import torch
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QPainterPath, QImage
 from PyQt5.uic import loadUi
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QVBoxLayout, QGraphicsScene, \
-    QGraphicsEllipseItem, QGraphicsView, QGraphicsProxyWidget, QGraphicsTextItem, QLineEdit
-from PyQt5.QtCore import Qt, QFile,QLocale
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel,QLineEdit
+from PyQt5.QtCore import Qt
 from PyQt5 import QtCore
 import matplotlib
-
-from GenderClassification.app import Model
-
+from Database import *
 matplotlib.use('Qt5Agg')
-from PyQt5.QtGui import QColor
-import pyqtgraph as pg
+
 
 import sys
 
@@ -29,6 +19,7 @@ class Login(QMainWindow):
         self.login_button = self.ui.login
         self.set_echo_button = self.ui.set_echo
         self.signup_button = self.ui.sign_up
+
 
 
         self.echo_password = True
@@ -45,6 +36,7 @@ class Login(QMainWindow):
         self.show()
 
     def line_edit_pressed(self, lineEdit):
+
             lineEdit.setReadOnly(False)
             if lineEdit.text() == "   Password" or lineEdit.text() == "   Username":
              lineEdit.setText("")
@@ -81,13 +73,16 @@ class Signup(QMainWindow):
     def __init__(self):
         super(Signup, self).__init__()
         self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\Signup.ui", self)
+        self.database_attributes = sqlite3_Database()
         self.username = self.ui.username
         self.password = self.ui.password
-        self.signup = self.ui.signup_button
+        self.signup_button = self.ui.signup_button
         self.set_echo_button = self.ui.setecho
         self.login_button = self.ui.redirect_login
         self.email = self.ui.email
         self.warn_label = self.findChild(QLabel, "warn")
+
+
 
         self.echo_password = True
         self.username.setReadOnly(True)
@@ -98,6 +93,7 @@ class Signup(QMainWindow):
         self.password.mousePressEvent = lambda event: self.line_edit_pressed(self.password)
         self.email.mousePressEvent = lambda event: self.line_edit_pressed(self.email)
         self.set_echo_button.clicked.connect(self.set_echo_mode)
+        self.signup_button.clicked.connect(self.signup)
         self.login_button.clicked.connect(self.redirect_to_login)
         self.setTabOrder(self.username, self.email)
         self.warn_label.setVisible(False)
@@ -167,10 +163,48 @@ class Signup(QMainWindow):
                 self.warn_label.setVisible(True)
             else:
                 self.warn_label.setVisible(False)
+                self.signup()
 
 
         else:
             super().keyPressEvent(qKeyEvent)
+
+    def signup(self):
+        if (len(self.password.text()) == 0 or len(self.username.text()) == 0 or len(self.email.text()) == 0
+                or self.password.text() == "   Password" or self.username.text() == "   Username" or self.email.text() == "   Email"):
+            self.warn_label.setVisible(True)
+        else:
+            self.warn_label.setVisible(False)
+            ID_generated = False
+            while ID_generated == False:
+             randomID = self.generate_randomID()
+             found = self.database_attributes.check_if_ID_used(randomID)
+             if found:
+                 ID_generated = True
+             email_check = self.database_attributes.check_if_email_exist(self.email.text())
+             username_check = self.database_attributes.check_if_username_exist((self.username.text()))
+             if email_check == False:
+                 self.warn_label.setVisible(True)
+                 self.warn_label.setText("This Email is already in use")
+                 return
+             if username_check == False:
+                 self.warn_label.setVisible(True)
+                 self.warn_label.setText("This username is already taken")
+                 return
+
+
+             self.database_attributes.add_user(randomID, self.username.text(), self.email.text(),self.password.text())
+            
+    def generate_randomID(self):
+        randomID = random.randint(0, 10000)
+        return randomID
+
+
+
+
+
+
+
 
 
 
