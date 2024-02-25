@@ -22,9 +22,10 @@ import sys
 
 
 class MyMainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, name):
         super(MyMainWindow, self).__init__()
         self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\appui.ui", self)
+        self.username = name
 
         self.start_time = time.time()
         self.start_date = time.strftime("%H:%M")
@@ -67,10 +68,8 @@ class MyMainWindow(QMainWindow):
         self.cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\11.mp4")
 
         self.home_page()
-
-
+        self.account_page()
         self.statistics_page()
-
 
         self.show_page(0)
         self.update_camera()
@@ -165,6 +164,7 @@ class MyMainWindow(QMainWindow):
         local = QLocale(QLocale.English)
         self.label_time = self.findChild(QLabel, "label_time")
         self.label_day = self.findChild(QLabel, "label_day")
+        self.name_label = self.findChild(QLabel, "label_2")
         self.label_average_age = self.findChild(QLabel, "label_avg_age")
         self.avg_male_count = self.findChild(QLabel, "label_avg_male")
         self.avg_female_count = self.findChild(QLabel, "label_avg_female")
@@ -179,6 +179,7 @@ class MyMainWindow(QMainWindow):
         day = local.toString(QtCore.QDateTime.currentDateTime(), "dddd")
         self.label_time.setText(time)
         self.label_day.setText(day)
+        self.name_label.setText(self.username)
 
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(1000)
@@ -374,6 +375,9 @@ class MyMainWindow(QMainWindow):
         scene2.addItem(proxy_widget2)
         scene3.addItem(proxy_widget3)
         scene4.addItem(proxy_widget4)
+    def account_page(self):
+        username = self.findChild(QLabel, "label_39")
+        username.setText(self.username)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
