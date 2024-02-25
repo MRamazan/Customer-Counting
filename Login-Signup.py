@@ -1,10 +1,15 @@
+import os
 import random
+import time
+
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel,QLineEdit
 from PyQt5.QtCore import Qt
 from PyQt5 import QtCore
 import matplotlib
 from Database import *
+from FalconApp import  MyMainWindow
+
 matplotlib.use('Qt5Agg')
 
 
@@ -13,14 +18,14 @@ import sys
 class Login(QMainWindow):
     def __init__(self):
         super(Login, self).__init__()
+        self.database_attributes = sqlite3_Database()
+
         self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\Login.ui", self)
         self.username = self.ui.username
         self.password = self.ui.password
         self.login_button = self.ui.login
         self.set_echo_button = self.ui.set_echo
         self.signup_button = self.ui.sign_up
-
-
 
         self.echo_password = True
         self.username.setReadOnly(True)
@@ -32,8 +37,26 @@ class Login(QMainWindow):
         self.set_echo_button.clicked.connect(self.set_echo_mode)
         self.signup_button.clicked.connect(self.redirect_to_signup)
 
-
         self.show()
+
+
+    def check_prev_login(self):
+        login_info_dir = os.path.expanduser("~/FalconApp/kullanicilar.txt")
+        if os.path.exists(login_info_dir):
+            with open(login_info_dir, "r") as path:
+                ID = path.read()
+                user_infos, user_stats = self.database_attributes.choose_from_personalID(ID)
+                username = user_infos["Username"]
+                self.close()
+                window = MyMainWindow(username)
+                window.show()
+                return True
+        else:
+            return False
+
+
+
+
 
     def line_edit_pressed(self, lineEdit):
 
@@ -194,17 +217,18 @@ class Signup(QMainWindow):
 
 
              self.database_attributes.add_user(randomID, self.username.text(), self.email.text(),self.password.text())
-            
+             self.write_to_txt(randomID)
+             self.close()
+             window = MyMainWindow(self.username.text())
+             window.show()
+
     def generate_randomID(self):
         randomID = random.randint(0, 10000)
         return randomID
-
-
-
-
-
-
-
+    def write_to_txt(self, id):
+        login_info_dir = os.path.expanduser("~/FalconApp/kullanicilar.txt")
+        with open(login_info_dir, "w") as dosya:
+            dosya.write(str(id))
 
 
 
@@ -213,5 +237,7 @@ class Signup(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Login()
-    window.show()
+    previous_login = window.check_prev_login()
+    if not previous_login:
+        window.show()
     sys.exit(app.exec_())
