@@ -1,16 +1,13 @@
 import math
-import sys
 
-from PyQt5.QtWidgets import QApplication
 
 from centroidtracker import CentroidTracker
 
 
 class Tracker:
     def __init__(self):
-       
         self.center_points = {}
-        
+       
         self.id_count = 0
 
 
@@ -18,13 +15,13 @@ class Tracker:
       
         objects_bbs_ids = []
 
-       
+     
         for rect in objects_rect:
             x, y, w, h = rect
             cx = (x + x + w) // 2
             cy = (y + y + h) // 2
 
-            # Find out if that object was detected already
+          
             same_object_detected = False
             for id, pt in self.center_points.items():
                 dist = math.hypot(cx - pt[0], cy - pt[1])
@@ -36,20 +33,20 @@ class Tracker:
                     same_object_detected = True
                     break
 
-           
+          
             if same_object_detected is False:
                 self.center_points[self.id_count] = (cx, cy)
                 objects_bbs_ids.append([x, y, w, h, self.id_count])
                 self.id_count += 1
 
-        
+     
         new_center_points = {}
         for obj_bb_id in objects_bbs_ids:
             _, _, _, _, object_id = obj_bb_id
             center = self.center_points[object_id]
             new_center_points[object_id] = center
 
-        # Update dictionary with IDs not used removed
+     
         self.center_points = new_center_points.copy()
 
 
@@ -64,14 +61,11 @@ output_queue = queue.Queue()
 
 
 class ObjectDetection:
-    """
-    Class implements Yolo5 model to make inferences on a youtube video using OpenCV.
-    """
 
-    def __init__(self):
+    def __init__(self, model):
 
         self.ids = []
-        self.model = self.load_model()
+        self.model = model
         self.classes = self.model.names
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.count = 0
@@ -79,7 +73,8 @@ class ObjectDetection:
         self.rect = []
         self.tracker = CentroidTracker(maxDisappeared=80, maxDistance=90)
         self.passed_ids = []
-        self.x = []
+
+        self.new_detected = False
 
         self.queue = queue
         self.frame = 0
@@ -91,13 +86,7 @@ class ObjectDetection:
 
 
 
-    def load_model(self):
-        """
-        Loads Yolo5 model from pytorch hub.
-        :return: Trained Pytorch model.
-        """
-        model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
-        return model
+
 
     def score_frame(self, frame):
         self.model.to(self.device)
@@ -105,13 +94,14 @@ class ObjectDetection:
         results = self.model(frame)
 
         labels, cord = results.xyxyn[0][:, -1], results.xyxyn[0][:, :-1]
-        return labels, cord
+        return labels, cord,
 
     def class_to_label(self, x):
         return self.classes[int(x)]
 
     def plot_boxes(self, results, frame, frame_count):
         labels, cord = results
+        self.new_detected = False
 
         n = len(labels)
         x_shape, y_shape = frame.shape[1], frame.shape[0]
@@ -126,19 +116,20 @@ class ObjectDetection:
                 x1, y1, x2, y2 = int(row[0] * x_shape), int(row[1] * y_shape), int(row[2] * x_shape), int(row[3] * y_shape)
                 center_x = (x1 + x2) / 2
                 center_y = (y1 + y2) / 2
+                self.new_detected = True
 
 
 
                 self.rect.append([x1, y1, x2, y2])
-                self.x = self.tracker.update(rects=self.rect)
+                self.new_rects = self.tracker.update(rects=self.rect)
 
                 center = (int(center_x), int(center_y))
                 frame[center[1], center[0]] = (50, 255, 100)
 
 
-        if isinstance(self.x, dict):
+        if isinstance(self.new_rects, dict):
          self.curr_count = len(self.rect)
-         for key, val in self.x.items():
+         for key, val in self.new_rects.items():
              center_y = (val[1] + val[3]) / 2
              cv2.rectangle(frame, (val[0], val[1]), (val[2], val[3]), (0 ,0, 255), 1)
              cv2.putText(frame, str("Total Crossed:"+ str(self.count)), (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
@@ -147,6 +138,7 @@ class ObjectDetection:
                 if center_y >= 100 and center_y <= 105:
                  self.passed_ids.append(key)
                  self.count += 1
+
          self.rect = []
 
         return frame
@@ -154,55 +146,32 @@ class ObjectDetection:
 
 
 
-    def __call__(self,frame, cap=None):
-        if cap is None:
-            cap = cv2.VideoCapture(0)
-        else:
-            cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\16.mp4")
+    def __call__(self, frame):
         frame_count = 0
 
-
-
         start_time = time.perf_counter()
-
-
-
 
         results = self.score_frame(frame)
         frame = self.plot_boxes(results, frame, frame_count)
         frame_count += 1
         end_time = time.perf_counter()
 
-
-
-
         fps = 1 / np.round(end_time - start_time, 3)
-        cv2.putText(frame, f'FPS: {int(fps)}', (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
+
         '''
             cv2.imshow("img", frame)
 
-            
+
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break'''
-        return frame, self.count, self.curr_count
-
-
-
-
-
-
-
-
-
+        if self.new_detected == False:
+         print(self.new_detected)
+        return frame, self.count, self.curr_count, self.new_detected
 
 
 
 # Nesneyi seçin ve çerçeve içine sınırlayın
 if __name__ == '__main__':
  cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\16.mp4")
- detection = ObjectDetection()
- while True:
-    ret, frame = cap.read()
-    output, _, _ = detection.__call__(frame)
-    cv2.imshow("sda", output)
-    cv2.waitKey(4)
+ detection = ObjectDetection(torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True))
+ detection([])
