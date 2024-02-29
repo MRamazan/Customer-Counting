@@ -1,7 +1,7 @@
 import sqlite3
-from datetime import datetime
 
-# SQLite3 veritabanına bağlan
+
+
 class sqlite3_Database():
     def __init__(self):
         self.conn = sqlite3.connect('mydatabase.db')
@@ -98,24 +98,39 @@ class sqlite3_Database():
         else:
             print(Name, "İsimli kullanıcı bulunamadı")
     def choose_from_personalID(self, personalID):
+        user_info_dict = {
+              "ID": None,
+              "Username": None,
+              "Email": None,
+             "Password": None
+        }
+        user_stats_dict = {
+            "ID": None,
+            "Today": None,
+            "Yesterday": None,
+            "ThisMonth":None,
+            "ThisYear": None
+        }
         self.cursor.execute("SELECT * FROM Users WHERE PersonalID = ?", (personalID,))
         user_info = self.cursor.fetchone()
         if user_info:
             print("Kullanıcı Bilgileri:")
-            print("ID:", user_info[1])
-            print("Kullanıcı Adı:", user_info[2])
-            print("E-posta:", user_info[3])
-            print("Password:", user_info[4])
+            user_info_dict["ID"] = user_info[1]
+            user_info_dict["Username"] = user_info[2]
+            user_info_dict["Email"] = user_info[3]
+            user_info_dict["Password"] = user_info[4]
             self.cursor.execute("SELECT * FROM UserStats WHERE PersonalID = ?", (user_info[0],))
             user_stats = self.cursor.fetchone()
             if user_stats:
                 print("Kullanıcı İstatistikleri:")
-                print("ID:", user_info[0])
-                print("Bugünkü Müşteri Sayısı:", user_stats[1])
-                print("Dünkü Müşteri Sayısı:", user_stats[2])
-                print("Bu Ayki Müşteri Sayısı:", user_stats[3])
-                print("Bu Yılki Müşteri Sayısı:", user_stats[4])
-                return True
+                user_stats_dict["ID"] = user_info[0]
+                user_stats_dict["Today"] = user_info[1]
+                user_stats_dict["Yesterday"] = user_info[2]
+                user_stats_dict["ThisMonth"] = user_info[3]
+                user_stats_dict["ThisYear"] = user_info[4]
+
+        return user_info_dict, user_stats_dict
+
     def check_if_ID_used(self, ID):
         self.cursor.execute("SELECT * FROM Users WHERE PersonalID = ?", (ID,))
         user_info = self.cursor.fetchone()
