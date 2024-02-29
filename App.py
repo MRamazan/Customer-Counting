@@ -22,10 +22,11 @@ import sys
 
 
 class MyMainWindow(QMainWindow):
-    def __init__(self, name):
+    def __init__(self, name, ):
         super(MyMainWindow, self).__init__()
         self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\appui.ui", self)
         self.username = name
+
 
         self.start_time = time.time()
         self.start_date = time.strftime("%H:%M")
@@ -384,4 +385,5 @@ if __name__ == '__main__':
     window = MyMainWindow()
     window.show()
     sys.exit(app.exec_())
+
 
