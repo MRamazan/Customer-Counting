@@ -24,7 +24,7 @@ import sys
 class MyMainWindow(QMainWindow):
     def __init__(self, name, ):
         super(MyMainWindow, self).__init__()
-        self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\appui.ui", self)
+        self.ui = loadUi("appui.ui", self)
         self.username = name
 
 
