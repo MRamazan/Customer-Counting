@@ -172,6 +172,6 @@ class ObjectDetection:
 
 # Nesneyi seçin ve çerçeve içine sınırlayın
 if __name__ == '__main__':
- cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\16.mp4")
+ cap = cv2.VideoCapture(r"video\16.mp4")
  detection = ObjectDetection(torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True))
  detection([])
