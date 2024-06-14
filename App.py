@@ -52,7 +52,7 @@ class MyMainWindow(QMainWindow):
         self.current_count = 0
         self.start = False
 
-        self.cam = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\0000.mp4")
+        self.cam = cv2.VideoCapture(r"video\0000.mp4")
         self.model = Model.ObjectDetection(torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True))
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(3000)
@@ -66,7 +66,7 @@ class MyMainWindow(QMainWindow):
 
 
 
-        self.cap = cv2.VideoCapture(r"C:\Users\PC\Desktop\DatasetVideos\11.mp4")
+        self.cap = cv2.VideoCapture(r"video\11.mp4")
 
         self.home_page()
         self.account_page()
