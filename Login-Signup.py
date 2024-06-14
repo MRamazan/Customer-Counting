@@ -41,7 +41,7 @@ class Login(QMainWindow):
 
 
     def check_prev_login(self):
-        login_info_dir = os.path.expanduser("~/FalconApp/kullanicilar.txt")
+        login_info_dir = os.path.expanduser("kullanicilar.txt")
         if os.path.exists(login_info_dir):
             with open(login_info_dir, "r") as path:
                 ID = path.read()
@@ -226,7 +226,7 @@ class Signup(QMainWindow):
         randomID = random.randint(0, 10000)
         return randomID
     def write_to_txt(self, id):
-        login_info_dir = os.path.expanduser("~/FalconApp/kullanicilar.txt")
+        login_info_dir = os.path.expanduser("kullanicilar.txt")
         with open(login_info_dir, "w") as dosya:
             dosya.write(str(id))
 
