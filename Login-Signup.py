@@ -20,7 +20,7 @@ class Login(QMainWindow):
         super(Login, self).__init__()
         self.database_attributes = sqlite3_Database()
 
-        self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\Login.ui", self)
+        self.ui = loadUi("Login.ui", self)
         self.username = self.ui.username
         self.password = self.ui.password
         self.login_button = self.ui.login
