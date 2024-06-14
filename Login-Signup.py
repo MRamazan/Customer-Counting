@@ -95,7 +95,7 @@ class Login(QMainWindow):
 class Signup(QMainWindow):
     def __init__(self):
         super(Signup, self).__init__()
-        self.ui = loadUi(r"C:\Users\PC\PycharmProjects\pythonProject2\GenderClassification\app\Signup.ui", self)
+        self.ui = loadUi("Signup.ui", self)
         self.database_attributes = sqlite3_Database()
         self.username = self.ui.username
         self.password = self.ui.password
