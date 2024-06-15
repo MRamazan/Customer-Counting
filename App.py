@@ -254,6 +254,7 @@ class MyMainWindow(QMainWindow):
         self.timer.timeout.connect(self.camera_page)
         self.timer.start()
     def update_camera_stats(self):
+	#Not Completed
         current_time = time.time()
         run_time =  int(np.round(current_time - self.start_time, 0) / 60)
         run_time_label = self.findChild(QLabel, "label_run_time")
@@ -288,6 +289,7 @@ class MyMainWindow(QMainWindow):
 
 
     def statistics_page(self):
+	#Not Completed
 
         plot_widget1 = pg.PlotWidget()
         plot_widget2 = pg.PlotWidget()
